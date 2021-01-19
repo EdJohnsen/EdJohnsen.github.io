@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+ <html>
+  <head>
+    <link type="text/css" rel="stylesheet" href="box_reset_normalize_clearfix.css">
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<script>
+	 google.charts.load('current', {'packages':['line']});
+     google.charts.setOnLoadCallback(drawChart2);
+	
+	let fromCSV = {
+		"Algeria":[261],
+		"Egypt":[187,149],
+		"Equatorial Guinea":[167,45],
+		"Gabon":[334],
+		"Gambia":[225,6],
+		"Guinea-Bissau":[238],
+		"Kenya":[300],
+		"Lesotho":[371],
+		"Libya":[236,22,36,37,39],
+		"Mauritania":[166,168,33],
+		"Morocco":[254,39,44],
+		"Namibia":[239,28,105],
+		"Senegal":[343],
+		"South Africa":[174,19,19,18,34,51,36,13,9],
+		"Sudan":[312],
+		"Tunisia":[290,11,17,20,24],
+		"Zambia":[254],
+		"Zimbabwe":[343],
+		"Afghanistan":[174,30],
+		"Armenia":[157,18,40,81,15,13,14,17],
+		"Azerbaijan":[203,104,31,19],
+		"Bahrain":[162,11,28,42,31,27],
+		"Bangladesh":[289],
+		"Georgia":[305,12,17,15,15],
+		"India":[228,48],
+		"Indonesia":[260,84],
+		"Iran":[91,28,69,29,42,29,18,13,12,20],
+		"Iraq":[170,9,18,22,23,23,29,36],
+		"Israel":[216,44,38,77],
+		"Jordan":[288,10,12,8,8,9,11,21],
+		"Kazakhstan":[209,21],
+		"Kuwait":[135,13,33,62,49,46],
+		"Kyrgyzstan":[199,5,22,68],
+		"Lebanon":[270,40,51],
+		"Nepal":[310],
+		"Oman":[163,20,24,20,25,20,21,19,42],
+		"Pakistan":[282],
+		"Philippines":[241,55],
+		"Qatar":[153,16,42],
+		"Saudi Arabia":[162,20,45,57],
+		"Syria":[345],
+		"Turkey":[135,137,74],
+		"United Arab Emirates":[125,36,170],
+		"Yemen":[323,40],
+		"Albania":[225,60,52],
+		"Austria":[295,25,19,18],
+		"Belarus":[262],
+		"Belgium":[94,5,7,10,30,159,12,14,24],
+		"Bosnia and Herzegovina":[211,37,59,13,12,13,13],
+		"Bulgaria":[267,43,18,11,12,18],
+		"Croatia":[299,16,19,13,12],
+		"Cyprus":[342,27],
+		"Czechia":[286,12,12,12,17,22],
+		"Denmark":[222,142],
+		"Estonia":[344,31],
+		"France":[94,8,44,170,29],
+		"Germany":[286,55,31],
+		"Greece":[321,13,30],
+		"Hungary":[286,22,20,13,13,15],
+		"Ireland":[104,8,24,235],
+		"Italy":[84,10,33,191,22,26],
+		"Latvia":[334,18,22],
+		"Lithuania":[321,17,20,11],
+		"Moldova":[130,28,41,46,31,23,21,18,15,16],
+		"Netherlands":[96,12,192,57],
+		"North Macedonia":[140,30,33,54,38,14,10,8,6,8,8,10,15],
+		"Poland":[291,19,18,16,21],
+		"Portugal":[136,165,37,31],
+		"Romania":[195,52,63,25,26],
+		"Russia":[196,92,60],
+		"Serbia":[224,105,24],
+		"Slovakia":[316,21,25,11],
+		"Slovenia":[297,11,13,11,8,10,13],
+		"Spain":[86,6,15,147,61,41],
+		"Sweden":[99,12,35,185,39],
+		"Switzerland":[98,22,200,17,19],
+		"Ukraine":[267,40,38],
+		"United Kingdom":[97,7,17,73,131,31],
+		"Canada":[122,28,205],
+		"Costa Rica":[226,27,33,45,39],
+		"Dominican Republic":[139,54,52],
+		"El Salvador":[200,35,129],
+		"Guatemala":[172,18,29,49,72],
+		"Honduras":[161,22,25,28,31,48],
+		"Jamaica":[288,86],
+		"Mexico":[138,15,19,16,17,18,18,25,22,26,21,17,17],
+		"Panama":[122,36,30,15,15,22,31,37,29,16,10,9],
+		"Trinidad and Tobago":[277],
+		"United States":[103,13,41,69,71,42,24],
+		"Argentina":[206,23,28,17,8,15,18,27],
+		"Bolivia":[158,19,17,16,12,15,13,6,26,83],
+		"Brazil":[130,13,23,21,20,22,25,34,47,31],
+		"Chile":[152,7,13,18,14,35,44,54],
+		"Colombia":[172,16,20,14,13,15,22,26,23,24,19],
+		"Ecuador":[118,5,19,40,47,21,1,30,57],
+		"Paraguay":[240,19,28,41,36],
+		"Peru":[125,14,21,14,16,15,14,10,11,12,12,20,32,53]
+	};
+	var allCountries = Object.keys(fromCSV);
+	allCountries.sort();
+	
+	var theseSets = {
+		peaks:["France","Italy","Spain","Sweden","Switzerland","Namibia","Kyrgyzstan","Qatar","Saudi Arabia","United Arab Emirates","Ireland","Netherlands","Canada","El Salvador","Guatemala","United Kingdom","United States","Armenia"],
+		flatlines:["Argentina","Colombia","Mexico","Panama","Peru","Slovenia","Slovakia","Poland","Lithuania","Latvia","Hungary","Czechia","Croatia","Bulgaria","Austria","Oman","Jordan","Iraq","Georgia","Tunisia"],
+		points:["Algeria","Gabon","Guinea-Bissau","Kenya","Lesotho","Senegal","Sudan","Zambia","Zimbabwe","Bangladesh","Nepal","Pakistan","Syria","Belarus","Trinidad and Tobago"],
+		other_A_to_H:["Afghanistan","Albania","Azerbaijan","Bahrain","Belgium","Bolivia","Bosnia and Herzegovina","Brazil","Chile","Costa Rica","Cyprus","Denmark","Dominican Republic","Estonia","Ecuador","Egypt","Equatorial Guinea","Gambia","Germany","Greece","Honduras"],
+		other_I_to_Y:["India","Indonesia","Iran","Israel","Jamaica","Kazakhstan","Kuwait","Lebanon","Libya","Mauritania","Morocco","South Africa","Moldova","North Macedonia","Paraguay","Philippines","Portugal","Romania","Russia","Serbia","Turkey","Ukraine","Yemen"],
+		all_A_to_C:["Afghanistan", "Albania", "Algeria", "Argentina", "Armenia", "Austria", "Azerbaijan", "Bahrain", "Bangladesh", "Belarus", "Belgium", "Bolivia", "Bosnia and Herzegovina", "Brazil", "Bulgaria", "Canada", "Chile", "Colombia", "Costa Rica", "Croatia", "Cyprus", "Czechia"], 
+		all_D_to_H:["Denmark", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Estonia", "France", "Gabon", "Gambia", "Georgia", "Germany", "Greece", "Guatemala", "Guinea-Bissau", "Honduras", "Hungary"], 
+		all_I_to_M:["India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Jordan", "Kazakhstan", "Kenya", "Kuwait", "Kyrgyzstan", "Latvia", "Lebanon", "Lesotho", "Libya", "Lithuania", "Mauritania", "Mexico", "Moldova", "Morocco"], 
+		all_N_to_R:["Namibia", "Nepal", "Netherlands", "North Macedonia", "Oman", "Pakistan", "Panama", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia"], 
+		all_S_to_Z:["Saudi Arabia", "Senegal", "Serbia", "Slovakia", "Slovenia", "South Africa", "Spain", "Sudan", "Sweden", "Switzerland", "Syria", "Trinidad and Tobago", "Tunisia", "Turkey", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Yemen", "Zambia", "Zimbabwe"],
+		all_all:["Afghanistan", "Albania", "Algeria", "Argentina", "Armenia", "Austria", "Azerbaijan", "Bahrain", "Bangladesh", "Belarus", "Belgium", "Bolivia", "Bosnia and Herzegovina", "Brazil", "Bulgaria", "Canada", "Chile", "Colombia", "Costa Rica", "Croatia", "Cyprus", "Czechia","Denmark", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Estonia", "France", "Gabon", "Gambia", "Georgia", "Germany", "Greece", "Guatemala", "Guinea-Bissau", "Honduras", "Hungary","India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Jordan", "Kazakhstan", "Kenya", "Kuwait", "Kyrgyzstan", "Latvia", "Lebanon", "Lesotho", "Libya", "Lithuania", "Mauritania", "Mexico", "Moldova", "Morocco","Namibia", "Nepal", "Netherlands", "North Macedonia", "Oman", "Pakistan", "Panama", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia","Saudi Arabia", "Senegal", "Serbia", "Slovakia", "Slovenia", "South Africa", "Spain", "Sudan", "Sweden", "Switzerland", "Syria", "Trinidad and Tobago", "Tunisia", "Turkey", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Yemen", "Zambia", "Zimbabwe"]
+	}
+	
+	let maxRows = 0;
+	let maxV 	= 0;
+	function determineMaxRows(){
+		let tempMax = 0;
+		let otherMax = 0;
+		for(let country in fromCSV){
+			tempMax = Math.max(tempMax, fromCSV[country].length+1);
+			for(let j=0, jmax=fromCSV[country].length; j<jmax; j++){
+				otherMax = Math.max(otherMax, fromCSV[country][j]);
+			}
+		}
+		maxRows = tempMax;
+		maxV 	= Math.ceil(otherMax);
+		maxV 	= maxV + 20 - Math.floor(maxV%20);
+	}
+	determineMaxRows();
+	var data, chart2, options2;
+    function drawChart2() {
+	  document.getElementById('individual-select').onchange = function() {
+	   updateToIndividual(this.value);
+	 };
+	 document.getElementById('group-select').onchange = function() {
+	   updateToGroup(this.value);
+	 };
+	 var optionsHTML = "";
+	 for(let i=0, imax=allCountries.length; i<imax; i++){
+		optionsHTML += "<option value='" + allCountries[i] + "'>" + allCountries[i] + "</option>";
+	 }
+	 document.getElementById('individual-select').innerHTML += optionsHTML;
+	  
+	  data = new google.visualization.DataTable();
+      data.addColumn('number', 'Percentage of Worst Case Deaths Suffered Thus Far', 'format','percent');
+      data.addColumn('number', 'Italy');
+      data.addColumn('number', 'Namibia');
+      data.addColumn('number', 'Egypt');
+	  data.addColumn('number', 'France');
+	  data.addColumn('number', 'Peru');
+	  data.addColumn('number', 'Mexico');
+	  data.addColumn('number', 'Belgium');
+	  data.addColumn('number', 'United States');
+		
+	   // data.addRows(maxRows);
+      data.addRows([
+        [0.5,  	84, 	239, 	187, 	94,		125,	138,	94,		103],
+        [1,  	10, 	28, 	149, 	8,		14,		15,		5,		13],
+        [2,  	33,   	105, 	null, 	44,		21,		19,		7,		41],
+        [3,  	191, 	null, 	null, 	170,	14,		16,		10,		69],
+        [4,  	22, 	null, 	null, 	29,		16,		17,		30,		71],
+        [5,   	26, 	null,  	null, 	null,	11.5,	18,		159,	42],
+        [6,   	null, 	null, 	null, 	null,	7,		18,		12,		24],
+        [7,  	null, 	null, 	null, 	null,	10,		25,		14,		null],
+        [8,  	null, 	null, 	null, 	null,	11,		22,		24,		null],
+        [9, 		null, 	null, 	null, 	null,	12,		26,		null,	null],
+        [10,  	null,  	null,  	null, 	null,	12,		21,		null,	null],
+        [11,  	null,  	null,  	null, 	null,	20,		17,		null,	null],
+        [12,  	null,  	null,  	null, 	null,	32,		17,		null,	null],
+        [13,  	null,  	null,  	null, 	null,	53,		null,	null,	null]
+      ]);
+
+      options2 = {
+        chart: {
+          title: 'Days between percentage-wise steps towards a country\'s worst-case-normalized death rates',
+          subtitle: 'where worst-case-normalization is based on population age-distributions informed by age to IFR (infection fatality rate) relationships'
+        },
+		//hAxis:{format:'percent'},
+		hAxis:{
+			textStyle:{fontSize:24},
+			viewWindow:{max:13, min:0}/*,
+			ticks:[0.5,1,2,3,4,5,6,7,8,9,10,11,12,13],
+			interval:[0.5,1]*/
+		},
+		vAxis:{
+			viewWindow:{max:maxV, min:0},
+			title:"Days between steps",
+			textStyle:{fontSize:24}
+		},
+        width: 1600,
+        height: 900,
+		focusTarget:'category'
+      };
+
+      chart2 = new google.charts.Line(document.getElementById('linechart_material'));
+
+      chart2.draw(data, google.charts.Line.convertOptions(options2));
+	  
+    }
+	
+	function updateToIndividual(whichIndividual){
+		if(!whichIndividual || whichIndividual === "Individual Countries"){return false;}
+		// else
+		// (assumes that all data columns contain 'number' type data)
+		// (assumes that the appropriate row count has already been set - in this case, the max number of rows - 14 due to 13 being highest number and the existence of a 0.5 row)
+		// 1. remove all except first column
+		// 2. add a column
+		// 3. update the cells in the new column
+		// 4. update the graph
+		
+		// remove all except first column
+		data.removeColumns(1, (data.getNumberOfColumns() - 1) );
+		
+		// add a column
+		data.addColumn('number', whichIndividual);
+		
+		// update the cells in the new column
+		for(let i=0, imax=fromCSV[whichIndividual].length; i<imax; i++){
+			data.setCell(i,1,fromCSV[whichIndividual][i]);
+		}
+		
+		// update the graph
+		chart2.draw(data, google.charts.Line.convertOptions(options2));
+		
+		
+		var sel = document.getElementById('group-select');
+		var opts = sel.options;
+		for (var opt, j = 0; opt = opts[j]; j++) {
+			if (opt.value === "") {
+				sel.selectedIndex = j;
+				break;
+			}
+		}
+	}
+	function updateToGroup(whichGroup){
+		if(!whichGroup || whichGroup === "Groups of Countries"){return false;}
+		// else
+		// remove all except first column
+		// add columns for each group member
+		// update the cells in the newly added columns
+		
+		// remove all except first column
+		data.removeColumns(1, (data.getNumberOfColumns() - 1) );
+		
+		// add columns
+		theseSets[whichGroup].sort();
+		for(let i=0, imax=theseSets[whichGroup].length; i<imax; i++){
+			
+			data.addColumn('number', theseSets[whichGroup][i]);
+		}
+		
+		// update the cells in each new column
+		for(let j=0, jmax=theseSets[whichGroup].length; j<jmax; j++){ // run through countries in a group
+			for(let i=0, imax=fromCSV[theseSets[whichGroup][j]].length; i<imax; i++){
+				data.setCell(i,j+1,fromCSV[theseSets[whichGroup][j]][i]);
+			}
+		}
+		
+		// update the graph
+		chart2.draw(data, google.charts.Line.convertOptions(options2));
+		
+		var sel = document.getElementById('individual-select');
+		var opts = sel.options;
+		for (var opt, j = 0; opt = opts[j]; j++) {
+			if (opt.value === "") {
+				sel.selectedIndex = j;
+				break;
+			}
+		}
+	}
+	
+	function addIndividual(whichIndividual){}
+	function removeIndividual(whichIndividual){}
+	
+	function addGroup(whichGroup){}
+	function removeGroup(whichGroup){}
+	</script>
+  </head>
+  <body>
+    <!-- <div id="curve_chart" style="width: 900px; height: 500px"></div> -->
+	<div id="linechart_material" style="width: 1600px; height: 900px"></div>
+	<select id="individual-select" style="position:absolute; right:200px; top:200px;">
+      <option value="">Individual Countries</option>	  
+    </select>
+	<select id="group-select" style="position:absolute; right:200px; top:240px;">
+      <option value="">Groups of Countries</option>
+      <option value="peaks">peaks</option>
+      <option value="flatlines">flatlines</option>
+      <option value="points">points</option>
+	  <option value="other_A_to_H">other A to H</option>
+	  <option value="other_I_to_Y">other I to Z</option>
+	  <option value="all_A_to_C">all_A_to_C</option>
+	  <option value="all_D_to_H">all_D_to_H</option>
+	  <option value="all_I_to_M">all_I_to_M</option>
+	  <option value="all_N_to_R">all_N_to_R</option>
+	  <option value="all_S_to_Z">all_S_to_Z</option>
+	  <option value="all_all">all_all</option>
+    </select>
+	<p style="position:absolute; right:200px; top:160px;">All data as of January 10th, 2021</p>
+  </body>
+</html>
