@@ -2,7 +2,72 @@
  <html>
   <head>
     <link type="text/css" rel="stylesheet" href="box_reset_normalize_clearfix.css">
+	
+  </head>
+  <body>
+	<div id="linechart_material" style="width: 1600px; height: 900px"></div>
+	<select id="individual-select" style="position:absolute; right:200px; top:200px;">
+      <option value="">Individual Countries</option>	  
+    </select>
+	<select id="group-select" style="position:absolute; right:200px; top:240px;">
+      <option value="">Groups of Countries</option>
+      <option value="peaks">peaks</option>
+      <option value="flatlines">flatlines</option>
+      <option value="points">points</option>
+	  <option value="other_A_to_H">other A to H</option>
+	  <option value="other_I_to_Y">other I to Z</option>
+	  <option value="all_A_to_C">all_A_to_C</option>
+	  <option value="all_D_to_H">all_D_to_H</option>
+	  <option value="all_I_to_M">all_I_to_M</option>
+	  <option value="all_N_to_R">all_N_to_R</option>
+	  <option value="all_S_to_Z">all_S_to_Z</option>
+	  <option value="all_all">all_all</option>
+    </select>
+	<p style="position:absolute; right:200px; top:160px;">All data as of January 10th, 2021</p>
+	
+	<script>
+	var width, height;
+	var subtitle = "where worst-case-normalization is based on population age-distributions informed by age to IFR (infection fatality rate) relationships";
+	function resize(){
+	
+		width = window.innerWidth
+			|| document.documentElement.clientWidth
+			|| document.body.clientWidth;
+			
+		height = window.innerHeight
+			|| document.documentElement.clientHeight
+			|| document.body.clientHeight;
+
+		document.body.style.width 	= width + "px";
+		document.body.style.height 	= height + "px";
+		
+		document.getElementById("linechart_material").style.height=height+"px";
+		document.getElementById("linechart_material").style.width=width+"px";
+			
+		if(typeof options2 !== 'undefined'){
+			
+			if(height<500 || width<900){
+				options2.chart.subtitle = "";
+			}
+			else{
+				options2.chart.subtitle = subtitle;
+			}
+			options2.height=height;
+			options2.width=width;
+			
+			chart2.draw(data, google.charts.Line.convertOptions(options2));
+			
+		}
+		
+		
+	}
+	resize();
+	window.addEventListener("resize",resize,false);
+
+	</script>
+	
 	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	
 	<script>
 	 google.charts.load('current', {'packages':['line']});
      google.charts.setOnLoadCallback(drawChart2);
@@ -199,14 +264,16 @@
 			title:"Days between steps",
 			textStyle:{fontSize:24}
 		},
-        width: 1600,
-        height: 900,
+        width: width,
+        height: height,
 		focusTarget:'category'
       };
 
       chart2 = new google.charts.Line(document.getElementById('linechart_material'));
 
       chart2.draw(data, google.charts.Line.convertOptions(options2));
+	  
+	  resize();
 	  
     }
 	
@@ -287,27 +354,6 @@
 	function addGroup(whichGroup){}
 	function removeGroup(whichGroup){}
 	</script>
-  </head>
-  <body>
-    <!-- <div id="curve_chart" style="width: 900px; height: 500px"></div> -->
-	<div id="linechart_material" style="width: 1600px; height: 900px"></div>
-	<select id="individual-select" style="position:absolute; right:200px; top:200px;">
-      <option value="">Individual Countries</option>	  
-    </select>
-	<select id="group-select" style="position:absolute; right:200px; top:240px;">
-      <option value="">Groups of Countries</option>
-      <option value="peaks">peaks</option>
-      <option value="flatlines">flatlines</option>
-      <option value="points">points</option>
-	  <option value="other_A_to_H">other A to H</option>
-	  <option value="other_I_to_Y">other I to Z</option>
-	  <option value="all_A_to_C">all_A_to_C</option>
-	  <option value="all_D_to_H">all_D_to_H</option>
-	  <option value="all_I_to_M">all_I_to_M</option>
-	  <option value="all_N_to_R">all_N_to_R</option>
-	  <option value="all_S_to_Z">all_S_to_Z</option>
-	  <option value="all_all">all_all</option>
-    </select>
-	<p style="position:absolute; right:200px; top:160px;">All data as of January 10th, 2021</p>
+	
   </body>
 </html>
