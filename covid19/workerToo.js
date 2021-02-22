@@ -284,7 +284,7 @@ let downloadedData 	= {};
 
 function getFile(e){
 	
-	let fileName = "../../json_data_files/jhu_nations_wc.txt";
+	let fileName = "jhu_nations_wc.txt";
 	
 	// let callback = requestObj.routeTo;
 	
