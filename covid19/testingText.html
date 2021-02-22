@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, minimum-scale=1.0">
+
+<title>Titles and Grids</title>
+
+<link type="text/css" rel="stylesheet" href="../../other%20html/box_reset_normalize_clearfix.css">
+
+<style>
+div, canvas{position:absolute; top:0; left:0;}
+#floatingDiv{background-color:#fff; max-height:300px; max-width:50%;}
+#blockInteraction{height:900px; width:1600px; background-color:transparent;}
+table{text-align:center; max-height:100%; background-color:#fff;}
+tr:nth-child(odd){background-color:#ded;}
+td, th{padding:5px;}
+tbody{
+  display:block;
+  max-height:250px;
+  overflow-y:scroll;
+  text-align:center;
+}
+tbody tr:nth-child(1){border-top:4px solid #000;}
+tbody tr:last-child{border-top:4px solid #000;}
+thead, tbody tr{
+  display:table;
+  width:100%;
+  table-layout:fixed;
+}
+
+thead{
+  width:calc(100% - 1em);
+}
+</style>
+
+</head>
+<body>
+
+<canvas id='bottomCanvas' 	height='900' width='1600'></canvas>
+<canvas id='middleCanvas' 	height='900' width='1600'></canvas>
+<canvas id='topCanvas' 		height='900' width='1600'></canvas>
+
+<div id='floatingDiv'></div>
+<div id='blockInteraction' ></div>
+
+<script>
+let body = document.body;
+
+let blockInteraction = document.getElementById('blockInteraction');
+
+let floatingDiv = document.getElementById('floatingDiv');
+
+let botCVS = document.getElementById("bottomCanvas");
+let midCVS = document.getElementById("middleCanvas");
+let topCVS = document.getElementById("topCanvas");
+
+let bCTX = botCVS.getContext('2d');
+let mCTX = midCVS.getContext('2d');
+let tCTX = topCVS.getContext('2d');
+
+let height = 900;
+let width = 1600;
+
+let titleHeight = 36;
+let subTitleHeight = 24;
+let tickFontHeight = 16;
+let xGridPadding = 100;
+let yGridPadding = 50;
+let outerPadding = 6;
+
+let layoutObject = {};
+
+
+let noData = 1;
+// DATA ARRAYS THAT WILL BE FILLED BY THE WORKER
+let colorArr 		= [];
+let lineArr 		= [];
+let pointGridArr 	= [];
+let lineDataArr 	= [];
+let focusBoxSizeX	= 0;
+let focusBoxSizeY	= 0;
+
+let titleObj 		= {
+	textTitle 			: false,
+	textSubtitle 		: false,
+	textLeftAxisTitle 	: false,
+	textBottomAxisTitle : false,
+	textRightAxisTitle 	: false,
+	textTopAxisTitle 	: false
+};
+
+let choices = {
+	hasTitle			: true,
+	hasSubtitle			: true,
+	hasTopAxisTitle		: false,
+	hasTopAxis			: false,
+	hasBottomAxisTitle	: true,
+	hasBottomAxis		: true,
+	hasLeftAxisTitle	: true,
+	hasLeftAxis			: true,
+	hasRightAxisTitle	: false,
+	hasRightAxis		: false,
+	hasTopGridLines		: false,
+	hasBottomGridLines	: true,
+	hasLeftGridLines	: true,
+	hasRightGridLines	: false
+};
+
+let data_worker = new Worker("workerToo.js");
+
+// add event listeners to the new worker
+data_worker.addEventListener('message', workerMessage);	
+
+function workerMessage(e){
+	
+	if(e.data && e.data.handler){
+		
+		colorArr = [];
+		colorArr = e.data.colorArr;
+		
+		lineArr = [];
+		lineArr	= e.data.lineArr;
+		
+		pointGridArr = [];
+		pointGridArr = e.data.pointGridArr;
+		
+		lineDataArr = [];
+		lineDataArr = e.data.lineDataArr;
+
+		focusBoxSizeX = e.data.focusBoxSizeX;
+		focusBoxSizeY = e.data.focusBoxSizeY;
+		console.log({
+			focusBoxSizeX:focusBoxSizeX,
+			focusBoxSizeY:focusBoxSizeY
+		});
+		console.log(layoutObject);
+		tCTX.clearRect(0,0,width,height);
+		previousX = 0;
+		previousY = 0;
+		
+		noData = 0;
+		
+		if(e.data.handler === "redrawRandom"){
+			redrawRandom();
+		}
+		else{
+			
+			drawPolylines(e.data);// redrawRandomSlower();
+		}
+	}
+	
+}
+
+
+function resize(){
+	
+	bCTX.clearRect(0, 0, width, height);
+	mCTX.clearRect(0, 0, width, height);
+	tCTX.clearRect(0, 0, width, height);
+	
+	width = window.innerWidth
+		|| document.documentElement.clientWidth
+		|| document.body.clientWidth;
+		
+	height = window.innerHeight
+		|| document.documentElement.clientHeight
+		|| document.body.clientHeight;
+	
+	body.style.width 	= width + "px";
+	body.style.height 	= height + "px";
+
+	botCVS.style.width 	= width + "px";
+	botCVS.style.height = height + "px";
+	
+	midCVS.style.width 	= width + "px";
+	midCVS.style.height = height + "px";
+	
+	topCVS.style.width 	= width + "px";
+	topCVS.style.height = height + "px";
+	
+	botCVS.width 	= width;
+	botCVS.height 	= height;
+	
+	midCVS.width 	= width;
+	midCVS.height 	= height;
+	
+	topCVS.width 	= width;
+	topCVS.height 	= height;
+	
+	blockInteraction.style.width 	= width + "px";
+	blockInteraction.style.height 	= height + "px";
+	
+	floatingDiv.style.maxHeight		= height/3 + "px";
+	floatingDiv.innerHTML = '';
+	floatingDiv.style.top = 0;
+	floatingDiv.style.left = 0;
+	
+	bCTX = botCVS.getContext('2d');
+	mCTX = midCVS.getContext('2d');
+	tCTX = topCVS.getContext('2d');
+	
+	bCTX.save();
+	mCTX.save();
+	tCTX.save();
+	
+	requestPoly();
+}
+resize();
+window.addEventListener('resize', resize, false);
+
+
+function determineLayout(choices, screenSize){
+
+	screenSize = screenSize || {
+		height	: height,
+		width	: width
+	};
+
+	let layoutObject = {};
+	
+	layoutObject.screenSize 	= screenSize;
+	
+	layoutObject.textPadding 	= choices.textPadding 	|| 6;
+	
+	layoutObject.topAxisGap 	= choices.topAxisGap 	|| 25;
+	layoutObject.bottomAxisGap 	= choices.bottomAxisGap || 25;
+	layoutObject.leftAxisGap 	= choices.leftAxisGap 	|| 50;
+	layoutObject.rightAxisGap 	= choices.rightAxisGap 	|| 50;
+	
+	layoutObject.titleHeight 	= choices.titleHeight 		|| 36;
+	layoutObject.subtitleHeight = choices.subtitleHeight 	|| 24;
+	layoutObject.tickFontHeight = choices.tickFontHeight 	|| 16;
+	
+	let topDown 	= layoutObject.textPadding;
+	let bottomUp 	= layoutObject.textPadding;
+	let leftRight 	= layoutObject.textPadding;
+	let rightLeft 	= layoutObject.textPadding;
+
+	
+	layoutObject.titleY = 	choices.hasTitle ? 
+							topDown : 
+							0;
+	
+	topDown += 	choices.hasTitle ? 
+				(layoutObject.titleHeight + layoutObject.textPadding) : 
+				0;
+	
+	
+	layoutObject.subtitleY = 	choices.hasSubtitle ? 
+								topDown : 
+								0;
+	
+	topDown += 	choices.hasSubtitle ? 
+				(layoutObject.subtitleHeight) : 
+				0;
+	
+								
+	layoutObject.headerLineY = 	(choices.hasTitle || choices.hasSubtitle) ? 
+								topDown : 
+								0;
+	
+	topDown += 	(choices.hasTitle || choices.hasSubtitle) ? 
+				2*layoutObject.textPadding : 
+				0;
+	
+	
+	layoutObject.topAxisTitleY 	= 	choices.hasTopAxisTitle ? 
+									topDown : 
+									0;
+									
+	topDown += 	choices.hasTopAxisTitle ? 
+				(layoutObject.subtitleHeight + layoutObject.textPadding) : 
+				0;
+	
+	
+	layoutObject.topAxisY = choices.hasTopAxis ? 
+							(topDown + layoutObject.topAxisGap) : 
+							topDown;
+	
+	topDown += 	choices.hasTopAxis ? 
+				layoutObject.topAxisGap : 
+				0;
+	
+
+	layoutObject.bottomAxisTitleY =	choices.hasBottomAxisTitle ? 
+									(screenSize.height - layoutObject.subtitleHeight - bottomUp) : 
+									0;
+									
+	bottomUp += choices.hasBottomAxisTitle ? 
+				(layoutObject.subtitleHeight + layoutObject.textPadding) : 
+				0;
+	
+	
+	layoutObject.bottomAxisY = 	choices.hasBottomAxis ?
+								(screenSize.height - layoutObject.bottomAxisGap - bottomUp) : 
+								(screenSize.height - bottomUp);	
+								
+	bottomUp += choices.hasBottomAxis ?
+				layoutObject.bottomAxisGap : 
+				0;
+
+	
+	layoutObject.gridAreaYstart = topDown + 1;
+	
+	layoutObject.gridAreaYend 	= screenSize.height - bottomUp - 1;
+
+	layoutObject.gridHeight = layoutObject.gridAreaYend - layoutObject.gridAreaYstart;
+
+	
+	layoutObject.leftAxisTitleX = 	choices.hasLeftAxisTitle ? 
+									leftRight : 
+									0;
+	
+	leftRight += 	choices.hasLeftAxisTitle ? 
+					(layoutObject.subtitleHeight + layoutObject.textPadding) : 
+					0;
+	
+	
+	layoutObject.leftAxisX = 	choices.hasLeftAxis ? 
+								(layoutObject.leftAxisGap + leftRight): 
+								leftRight;
+	
+	leftRight += 	choices.hasLeftAxis ? 
+					layoutObject.leftAxisGap : 
+					0;
+
+	
+	
+	layoutObject.rightAxisTitleX = 	choices.hasRightAxisTitle ? 
+									(screenSize.width - rightLeft): 
+									0;
+	
+	rightLeft += 	choices.hasRightAxisTitle ? 
+					(layoutObject.subtitleHeight + layoutObject.textPadding) : 
+					0;
+	
+	
+	layoutObject.rightAxisX = 	choices.hasRightAxis ? 
+								(screenSize.width - layoutObject.rightAxisGap - rightLeft): 
+								(screenSize.width - rightLeft);
+	
+	rightLeft += 	choices.hasRightAxis ? 
+					layoutObject.rightAxisGap : 
+					0;
+	
+	
+	layoutObject.gridAreaXstart = leftRight + 1;
+	layoutObject.gridAreaXend 	= screenSize.width - rightLeft - 1;
+	
+	layoutObject.gridWidth = layoutObject.gridAreaXend - layoutObject.gridAreaXstart;
+	
+	return layoutObject;
+
+}
+
+
+function drawTitle(text, layoutObject){
+	
+	bCTX.restore();
+	bCTX.save();
+	
+	bCTX.textAlign = 'center';
+	bCTX.textBaseline = 'top';
+	bCTX.font = 'bold '+titleHeight+'px Arial, sans-serif';
+	bCTX.lineWidth = 10;
+	bCTX.strokeStyle = '#ccf';
+	
+	bCTX.strokeText(text, width/2, layoutObject.titleY, width);
+	
+	bCTX.fillText(	text, width/2, layoutObject.titleY, width);
+	
+	bCTX.restore();
+	bCTX.save();
+}
+
+function drawSubTitle(text, layoutObject){
+	
+	bCTX.restore();
+	bCTX.save();
+	
+	bCTX.textAlign = 'center';
+	bCTX.textBaseline = 'top';
+	bCTX.font = 'bold ' + layoutObject.subtitleHeight + 'px Arial, sans-serif';
+		
+	bCTX.fillText(text, width/2, layoutObject.subtitleY, width);
+	
+	
+	bCTX.restore();
+	bCTX.save();
+}
+
+function drawLeftAxisTitle(text, layoutObject){
+
+	bCTX.restore();
+	bCTX.save();
+	
+	bCTX.textAlign = 'center';
+	bCTX.textBaseline = 'top';
+	bCTX.font = layoutObject.subtitleHeight + 'px Arial, sans-serif';
+	
+	bCTX.translate(0,(layoutObject.gridAreaYstart-1 + layoutObject.gridAreaYend+1)/2);
+	
+	bCTX.rotate(Math.PI/180*270);
+	
+	bCTX.fillText(text, 0, layoutObject.leftAxisTitleX, layoutObject.gridHeight);
+
+	bCTX.restore();
+	bCTX.save();
+}
+
+function drawBottomAxisTitle(text, layoutObject){
+
+	bCTX.restore();
+	bCTX.save();
+	
+	bCTX.textAlign = 'center';
+	bCTX.textBaseline = 'top';
+	bCTX.font = layoutObject.subtitleHeight + 'px Arial, sans-serif';
+	
+	bCTX.fillText(text, width/2, layoutObject.bottomAxisTitleY, layoutObject.gridWidth);
+	
+	bCTX.restore();
+	bCTX.save();
+}
+
+function drawRightAxisTitle(text, layoutObject){
+
+	bCTX.restore();
+	bCTX.save();
+	
+	bCTX.textAlign = 'center';
+	bCTX.textBaseline = 'top';
+	bCTX.font = layoutObject.subtitleHeight + 'px Arial, sans-serif';
+	
+	bCTX.translate(width, (layoutObject.gridAreaYstart-1 + layoutObject.gridAreaYend+1)/2);
+	
+	bCTX.rotate(Math.PI/180*90);
+	
+	bCTX.fillText(text, 0, width - layoutObject.rightAxisTitleX, layoutObject.gridHeight);
+	
+	bCTX.restore();
+	bCTX.save();
+}
+
+function drawTopAxisTitle(text, layoutObject){
+
+	bCTX.restore();
+	bCTX.save();
+	
+	bCTX.textAlign = 'center';
+	bCTX.textBaseline = 'top';
+	bCTX.font = layoutObject.subtitleHeight + 'px Arial, sans-serif';
+	
+	bCTX.fillText(text, width/2, layoutObject.topAxisTitleY, layoutObject.gridWidth);
+	
+	bCTX.restore();
+	bCTX.save();
+}
+
+function drawTitles(titleObj, layoutObject) {
+	
+	titleObj.textTitle 				&& drawTitle(titleObj.textTitle, 					layoutObject);
+	
+	titleObj.textSubtitle 			&& drawSubTitle(titleObj.textSubtitle, 				layoutObject);
+	
+	titleObj.textLeftAxisTitle 		&& drawLeftAxisTitle(titleObj.textLeftAxisTitle, 	layoutObject);
+	
+	titleObj.textBottomAxisTitle 	&& drawBottomAxisTitle(titleObj.textBottomAxisTitle, layoutObject);
+	
+	titleObj.textRightAxisTitle 	&& drawRightAxisTitle(titleObj.textRightAxisTitle, 	layoutObject);
+	
+	titleObj.textTopAxisTitle 		&& drawTopAxisTitle(titleObj.textTopAxisTitle, 		layoutObject);
+
+}
+
+
+function drawGridLines(layoutObject, data){
+	
+	bCTX.restore();
+	bCTX.save();	
+	
+	let maxVal_LY	= data.ymax;
+	let minVal_LY	= 0;
+	let maxVal_LX	= data.xmax;
+	let minVal_LX	= 0;
+		
+	let gridHeight 		= 0;
+	let gridWidth 		= 0;
+	let diff 			= 0;
+	let valInc			= 0;
+	let valStep			= 0;
+	let pixStep			= 0;
+	let gridToValSpan 	= 0;
+	
+	if(layoutObject.headerLineY){
+	
+		bCTX.beginPath();
+		bCTX.strokeStyle = '#ccF';
+		
+		bCTX.moveTo(0,		layoutObject.headerLineY);
+		bCTX.lineTo(width,	layoutObject.headerLineY);
+		
+		bCTX.stroke();
+	}
+	
+	bCTX.beginPath();
+	bCTX.strokeStyle = '#ccc';
+	
+	if(choices.hasTopAxis){
+	
+		bCTX.moveTo(layoutObject.leftAxisX, layoutObject.topAxisY);
+		bCTX.lineTo(layoutObject.rightAxisX, layoutObject.topAxisY);
+		
+		// draw top axis tick marks
+		bCTX.textBaseline 	= 'top';
+		bCTX.font 			= tickFontHeight + 'px Arial, sans-serif';
+		
+		valInc 			= 12;
+		diff 			= 136;
+		gridToValSpan 	= (layoutObject.gridWidth +2)/diff;
+		valStep 		= Math.floor(diff/valInc);
+		pixStep			= valStep  * gridToValSpan;
+		
+		while(pixStep < 32){
+			
+			valInc--;
+			valStep = Math.floor(diff/valInc);
+			pixStep	= valStep  * gridToValSpan;
+		}
+		
+		for(let i=0; layoutObject.leftAxisX + pixStep*i <= layoutObject.rightAxisX; i+=1){
+			
+			bCTX.moveTo(layoutObject.leftAxisX + pixStep*i, layoutObject.topAxisY-4);
+			bCTX.lineTo(layoutObject.leftAxisX + pixStep*i, layoutObject.topAxisY+4);
+			
+			// text = 'Top';
+			// bCTX.fillText(text, layoutObject.leftAxisX + pixStep*i, layoutObject.topAxisY-38);
+			
+			text = i*valStep;
+			bCTX.fillText(text, layoutObject.leftAxisX + pixStep*i, layoutObject.topAxisY-22);
+		}
+	}
+	
+	if(choices.hasRightAxis){
+	
+		bCTX.moveTo(layoutObject.rightAxisX, layoutObject.topAxisY);
+		bCTX.lineTo(layoutObject.rightAxisX, layoutObject.bottomAxisY);
+		
+		bCTX.textBaseline = 'middle';
+		bCTX.textAlign = 'left';
+		bCTX.font = '16px Arial, sans-serif';
+		
+		diff 			= 80;
+		gridToValSpan 	= (layoutObject.gridHeight + 2)/diff;
+		valInc 			= 13;
+		valStep 		= Math.floor(diff/valInc);
+		pixStep			= valStep  * gridToValSpan;
+		while(pixStep < 18){
+			
+			valInc--;
+			valStep = Math.floor(diff/valInc);
+			pixStep	= valStep  * gridToValSpan;
+		}
+		
+		// draw right axis tick marks
+		for(let i=0; layoutObject.bottomAxisY - pixStep*i >= layoutObject.topAxisY; i+=1){
+			
+			bCTX.moveTo(layoutObject.rightAxisX-4, 	layoutObject.bottomAxisY - pixStep*i);
+			bCTX.lineTo(layoutObject.rightAxisX+4, 	layoutObject.bottomAxisY - pixStep*i);
+			
+			text = i*valStep;
+			
+			bCTX.fillText(text, layoutObject.rightAxisX+6, layoutObject.bottomAxisY - pixStep*i);
+		}
+	}
+	
+	if(choices.hasBottomAxis){
+	
+		bCTX.moveTo(layoutObject.leftAxisX, layoutObject.bottomAxisY);
+		bCTX.lineTo(layoutObject.rightAxisX, layoutObject.bottomAxisY);
+		
+		bCTX.textBaseline = 'top';
+		bCTX.textAlign = 'center';
+		bCTX.font = tickFontHeight + 'px Arial, sans-serif';
+		
+		// draw bottom axis tick marks		
+		diff			= Math.abs(maxVal_LX - minVal_LX);
+		
+		gridToValSpan 	= (layoutObject.gridWidth + 2)/diff;
+		
+		if(!valInc){
+			if(!valStep){
+				valInc = 10;
+			}
+			else{
+				valInc = Math.round(diff/valStep);
+			}
+		}
+		valStep 		= Math.round(diff/valInc);
+		pixStep			= valStep  * gridToValSpan;
+		
+		while(pixStep < 32){
+			
+			valInc--;
+			valStep = Math.round(diff/valInc);
+			pixStep	= valStep * gridToValSpan;
+		}
+		
+		for(let i=0; layoutObject.leftAxisX + pixStep*i <= layoutObject.rightAxisX; i+=1){
+			
+			bCTX.moveTo(layoutObject.leftAxisX + pixStep*i, layoutObject.bottomAxisY-4);
+			bCTX.lineTo(layoutObject.leftAxisX + pixStep*i, layoutObject.bottomAxisY+4);
+			
+			// text = 'Bot';
+			
+			// bCTX.fillText(text, layoutObject.gridAreaXstart-1 + pixStep*i, layoutObject.bottomAxisY+6);
+			
+
+			text = i*valStep;
+			
+			bCTX.fillText(text, layoutObject.gridAreaXstart-1 + pixStep*i, layoutObject.bottomAxisY+6); //22
+		}
+	}
+	
+	if(choices.hasLeftAxis){ 
+	
+		bCTX.moveTo(layoutObject.leftAxisX, layoutObject.topAxisY);
+		bCTX.lineTo(layoutObject.leftAxisX, layoutObject.bottomAxisY);
+		
+		// draw left axis tick marks
+		bCTX.textBaseline = 'middle';
+		bCTX.textAlign = 'right';
+		bCTX.font = '16px Arial, sans-serif';
+		
+		diff			= Math.abs(maxVal_LY - minVal_LY);
+		
+		gridToValSpan 	= (layoutObject.gridHeight + 2)/diff;
+		
+		if(!valInc){
+			if(!valStep){
+				valInc = 10;
+			}
+			else{
+				valInc = Math.floor(diff/valStep);
+			}
+		}
+		valStep 		= Math.floor(diff/valInc);
+		pixStep			= valStep  * gridToValSpan;
+		
+		while(pixStep < 18){
+			
+			valInc--;
+			valStep = Math.floor(diff/valInc);
+			pixStep	= valStep  * gridToValSpan;
+		}
+		
+		for(let i=0; layoutObject.bottomAxisY - pixStep*i >= layoutObject.topAxisY; i+=1){
+			
+			bCTX.moveTo(layoutObject.leftAxisX-4, layoutObject.bottomAxisY - pixStep*i);
+			bCTX.lineTo(layoutObject.leftAxisX+4, layoutObject.bottomAxisY - pixStep*i);
+		
+			text = i*valStep; // 'Left ' + 
+			
+			bCTX.fillText(text, layoutObject.leftAxisX-6, layoutObject.bottomAxisY - pixStep*i);
+		}
+	}
+	
+	bCTX.stroke();	
+	
+	
+	bCTX.beginPath();
+		
+	if(choices.hasLeftGridLines){
+	
+		diff			= Math.abs(maxVal_LY - minVal_LY);
+		
+		gridToValSpan 	= (layoutObject.gridHeight + 2)/diff;
+		
+		if(!valInc){
+			if(!valStep){
+				valInc = 10;
+			}
+			else{
+				valInc = Math.floor(diff/valStep);
+			}
+		}
+		valStep 		= Math.floor(diff/valInc);
+		pixStep			= valStep  * gridToValSpan;
+		
+		while(pixStep < 18){
+			
+			valInc--;
+			valStep = Math.floor(diff/valInc);
+			pixStep	= valStep  * gridToValSpan;
+		}
+		
+		for(let i=0; layoutObject.bottomAxisY - pixStep*i >= layoutObject.topAxisY; i+=1){
+			
+			bCTX.moveTo(layoutObject.leftAxisX, 	layoutObject.bottomAxisY - pixStep*i);
+			bCTX.lineTo(layoutObject.rightAxisX, 	layoutObject.bottomAxisY - pixStep*i);
+		}
+	}
+	
+	if(choices.hasBottomGridLines){
+		
+		diff			= Math.abs(maxVal_LX - minVal_LX);
+		
+		gridToValSpan 	= (layoutObject.gridWidth + 2)/diff;
+		
+		if(!valInc){
+			if(!valStep){
+				valInc = 10;
+			}
+			else{
+				valInc = Math.round(diff/valStep);
+			}
+		}
+		valStep 		= Math.round(diff/valInc);
+		pixStep			= valStep  * gridToValSpan;
+		
+		while(pixStep < 32){
+			
+			valInc--;
+			valStep = Math.round(diff/valInc);
+			pixStep	= valStep * gridToValSpan;
+		}
+		
+		for(let i=0; layoutObject.leftAxisX + pixStep*i <= layoutObject.rightAxisX; i+=1){
+			
+			bCTX.moveTo(layoutObject.leftAxisX + pixStep*i, layoutObject.topAxisY);
+			bCTX.lineTo(layoutObject.leftAxisX + pixStep*i, layoutObject.bottomAxisY);
+			
+		}
+	}
+	
+	if(choices.hasRightGridLines){
+		
+		diff 			= 80;
+		gridToValSpan 	= (layoutObject.gridHeight+2)/diff;
+		valInc 			= 6.5;
+		valStep 		= Math.floor(diff/valInc);
+		pixStep			= valStep  * gridToValSpan;
+		
+		for(let i=0; layoutObject.bottomAxisY - pixStep*i >= layoutObject.topAxisY; i+=1){
+			
+			bCTX.moveTo(layoutObject.leftAxisX, 	layoutObject.bottomAxisY - pixStep*i);
+			bCTX.lineTo(layoutObject.rightAxisX, 	layoutObject.bottomAxisY - pixStep*i);
+		}
+	}
+	
+	if(choices.hasTopGridLines){
+	
+		valInc 			= 6;
+		diff 			= 136;
+		gridToValSpan 	= (layoutObject.gridWidth + 2)/diff;
+		valStep 		= Math.floor(diff/valInc);
+		pixStep			= valStep  * gridToValSpan;
+		
+		for(let i=0; layoutObject.leftAxisX + pixStep*i <= layoutObject.rightAxisX; i+=1){
+			
+			bCTX.moveTo(layoutObject.leftAxisX + pixStep*i, layoutObject.topAxisY);
+			bCTX.lineTo(layoutObject.leftAxisX + pixStep*i, layoutObject.bottomAxisY);
+		}
+	}
+	
+	bCTX.stroke();
+	
+	bCTX.restore();
+	bCTX.save();
+}
+
+
+function drawPolylines(data){
+	
+	drawTitles(data.titleObj, layoutObject);
+	
+	drawGridLines(layoutObject, data);
+
+	
+	let i, imax, x, y;
+	mCTX.clearRect(0,0,width,height);
+	mCTX.lineJoin = 'bevel';
+	mCTX.beginPath();
+	
+	for(let key in lineArr){
+		
+		x = lineArr[key][0][0];
+		
+		y = lineArr[key][0][1];
+
+		mCTX.moveTo(x,y);
+		mCTX.arc(x, y, 2, 0, 2 * Math.PI);
+		mCTX.moveTo(x,y);
+		
+		i=1;
+		
+		imax = lineArr[key].length;
+		
+		for(; i<imax; i++){
+		
+			x = lineArr[key][i][0];
+		
+			y = lineArr[key][i][1];
+		
+			mCTX.lineTo(x,y);
+			mCTX.arc(x, y, 2, 0, 2 * Math.PI);
+			mCTX.moveTo(x,y);
+		}
+	}
+	mCTX.stroke();
+}
+
+function requestPoly(){
+
+	layoutObject = determineLayout(choices);
+	
+	data_worker.postMessage({		
+		handler:'drawPolylines',
+		titleObj:titleObj,
+		layoutObject:layoutObject
+	});
+}
+
+
+let previousX = 0;
+let previousY = 0;
+let infoHTML = "";
+let smallBoxXsize = 1;
+let smallBoxYsize = 1;
+
+function trackPosition(e){
+	
+	if(noData){return false;}
+	
+	if(
+		e.offsetX < layoutObject.leftAxisX 	||
+		e.offsetX > layoutObject.rightAxisX ||
+		e.offsetY < layoutObject.topAxisY 	||
+		e.offsetY > layoutObject.bottomAxisY
+	){
+		tCTX.clearRect(0,0,width,height);
+		floatingDiv.innerHTML = '';
+		floatingDiv.style.top = 0;
+		floatingDiv.style.left = 0;
+		previousX = -1;
+		previousY = -1;
+		smallBoxXsize = 1;
+		smallBoxYsize = 1;
+		return false;
+	}
+	
+	let piaX = Math.floor( (e.offsetX - layoutObject.gridAreaXstart)/focusBoxSizeX );
+	
+	let piaY = Math.floor( (e.offsetY - layoutObject.gridAreaYstart - layoutObject.gridHeight)/focusBoxSizeY );
+		
+	if(pointGridArr[piaX] && pointGridArr[piaX][piaY] && pointGridArr[piaX][piaY].length){
+		
+		rect = floatingDiv.getBoundingClientRect();
+		
+		if(previousX !== piaX || previousY !== piaY){		
+		
+			tCTX.clearRect(0,0,width,height);
+			
+			tCTX.lineWidth = 4;
+			
+			let pointIArr = pointGridArr[piaX][piaY] || null;
+			
+			let piaID = 0;
+			let mtx = 0;
+			let ltx = 0;
+			let mty = 0;
+			let lty = 0;
+			
+			infoHTML = "";
+			floatingDiv.innerHTML = infoHTML;
+			
+			
+			let i=0, imax=pointIArr.length;
+			let j=0, jmax=0;
+			
+			for(; i<imax; i++){
+				
+				tCTX.beginPath();
+				tCTX.strokeStyle = colorArr[i%30];
+				
+				mtx = lineArr[ pointIArr[i][0] ][0][0];
+				mty = lineArr[ pointIArr[i][0] ][0][1];
+						
+				// draw a point
+				tCTX.moveTo(mtx, mty);
+				tCTX.arc(mtx, mty, 3, 0, 2 * Math.PI);
+				tCTX.moveTo(mtx, mty);
+				
+				j=1, jmax = lineArr[ pointIArr[i][0] ].length;
+				
+				for(; j<jmax; j++){
+					
+					ltx = lineArr[ pointIArr[i][0] ][j][0];
+					lty = lineArr[ pointIArr[i][0] ][j][1];
+					
+					tCTX.lineTo(ltx, lty);
+					// draw a point
+					tCTX.arc(ltx, lty, 3, 0, 2 * Math.PI);
+					tCTX.moveTo(ltx, lty);
+				}
+				infoHTML += "<tr style='background-color:" + colorArr[i%30] + "; font-weight:800;'>" + lineDataArr[ pointIArr[i][0] ][ pointIArr[i][1] ] + "</tr>";
+				
+				tCTX.stroke();
+			}
+			if(i>=1){
+				infoHTML = "<table style='border:3px solid #444; border-radius:8px;'><thead><tr><th>Country</th><th>WC%</th><th>Days Later</th><th>On Date</th><th>Total Deaths</th></tr></thead><tbody>" + infoHTML;
+				infoHTML += "<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr></tbody></table>";
+				
+				floatingDiv.style.left = 0;
+				floatingDiv.style.top  = 0;
+				floatingDiv.innerHTML = infoHTML;
+			}
+			
+			smallBoxXsize = Math.min(
+				focusBoxSizeX, 
+				layoutObject.gridAreaXend - piaX*focusBoxSizeX,
+				(piaX+1)*focusBoxSizeX - layoutObject.gridAreaXstart
+			);
+			
+			smallBoxYsize = Math.min(
+				focusBoxSizeY, 
+				layoutObject.gridAreaYend - piaY*focusBoxSizeY,
+				(piaY+1)*focusBoxSizeY - layoutObject.gridAreaYstart
+			);
+			
+			tCTX.beginPath();
+			
+			tCTX.strokeStyle = '#002';
+			tCTX.lineWidth = 1;
+			
+			tCTX.rect(
+				layoutObject.gridAreaXstart + piaX*focusBoxSizeX, 
+				layoutObject.gridAreaYend + piaY*focusBoxSizeY, 
+				focusBoxSizeX,
+				focusBoxSizeY
+			);
+			tCTX.stroke();
+		}
+		
+		let shiftedPosition = (e.offsetY - layoutObject.gridAreaYstart);
+		let topOfFocusBox 	= (layoutObject.gridHeight + piaY*focusBoxSizeY);
+		
+		let percentDistanceFromTopOfFocusBox = (shiftedPosition-topOfFocusBox)/focusBoxSizeY ;
+	
+		let theTbody = floatingDiv.getElementsByTagName('TBODY')[0];
+		let tbHeight = theTbody.getBoundingClientRect().height;
+		let tBodyRowCount = theTbody.getElementsByTagName('TR').length;
+		
+		let firstTR = floatingDiv.getElementsByTagName('TR')[0];
+		
+		let trHeight = firstTR.getBoundingClientRect().height;
+		
+		let tBodyHeight = trHeight*tBodyRowCount;
+		
+		if(percentDistanceFromTopOfFocusBox < 0.05){percentDistanceFromTopOfFocusBox = 0;}
+		else if(percentDistanceFromTopOfFocusBox > 0.95){percentDistanceFromTopOfFocusBox = 1;}
+		theTbody.scrollTop = percentDistanceFromTopOfFocusBox * tBodyHeight - tbHeight/2;
+		
+		previousX = piaX;
+		previousY = piaY;
+		
+		if(!rect.height){rect.height = height/3;}
+		if(!rect.width){rect.width = width/2;}
+		// SET POSITION OF FLOATING DIV
+		if(height < 2 * e.offsetY){
+			
+			floatingDiv.style.top = e.offsetY - rect.height - 50 + "px";
+			 
+			floatingDiv.style.left = e.offsetX - (e.offsetX/width) * rect.width + "px";
+		}
+		else{
+			
+			floatingDiv.style.top = e.offsetY + 50 + "px";
+			 
+			floatingDiv.style.left = e.offsetX - (e.offsetX/width) * rect.width + "px";
+		}
+	}
+	else{
+		tCTX.clearRect(0,0,width,height);
+		floatingDiv.innerHTML = '';
+		floatingDiv.style.top = 0;
+		floatingDiv.style.left = 0;
+		previousX = -1;
+		previousY = -1;
+		smallBoxXsize = 1;
+		smallBoxYsize = 1;
+	}
+}
+window.addEventListener('mousemove',trackPosition,false);
+
+</script>
+</body>
+</html>
