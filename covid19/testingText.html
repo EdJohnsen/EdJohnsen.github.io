@@ -7,7 +7,7 @@
 
 <title>Titles and Grids</title>
 
-<link type="text/css" rel="stylesheet" href="box_reset_normalize_clearfix.css">
+<link type="text/css" rel="stylesheet" href="../../other%20html/box_reset_normalize_clearfix.css">
 
 <style>
 div, canvas{position:absolute; top:0; left:0;}
@@ -131,11 +131,7 @@ function workerMessage(e){
 
 		focusBoxSizeX = e.data.focusBoxSizeX;
 		focusBoxSizeY = e.data.focusBoxSizeY;
-		console.log({
-			focusBoxSizeX:focusBoxSizeX,
-			focusBoxSizeY:focusBoxSizeY
-		});
-		console.log(layoutObject);
+		
 		tCTX.clearRect(0,0,width,height);
 		previousX = 0;
 		previousY = 0;
@@ -971,15 +967,15 @@ function trackPosition(e){
 		// SET POSITION OF FLOATING DIV
 		if(height < 2 * e.offsetY){
 			
-			floatingDiv.style.top = e.offsetY - rect.height - 50 + "px";
-			 
-			floatingDiv.style.left = e.offsetX - (e.offsetX/width) * rect.width + "px";
+			// floatingDiv.style.top = e.offsetY - rect.height - 50 + "px";
+			floatingDiv.style.top = layoutObject.topAxisY + "px"; 
+			floatingDiv.style.left = Math.max(layoutObject.leftAxisX + 100, e.offsetX - (e.offsetX/width) * rect.width) + "px";
 		}
 		else{
 			
-			floatingDiv.style.top = e.offsetY + 50 + "px";
-			 
-			floatingDiv.style.left = e.offsetX - (e.offsetX/width) * rect.width + "px";
+			// floatingDiv.style.top = e.offsetY + 50 + "px";
+			floatingDiv.style.top = layoutObject.topAxisY + "px"; 
+			floatingDiv.style.left = Math.max(layoutObject.leftAxisX + 100, e.offsetX - (e.offsetX/width) * rect.width) + "px";
 		}
 	}
 	else{
