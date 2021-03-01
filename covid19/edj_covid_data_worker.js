@@ -470,7 +470,7 @@ function makeDataFile(requestObj){
 // file request handler
 function getFile(requestObj){
 	
-	let fileName = "../json_data_files/" + requestObj.dataFile + ".txt";
+	let fileName = requestObj.dataFile + ".txt";
 	
 	let callback = requestObj.routeTo;
 	
@@ -512,7 +512,7 @@ function getFile(requestObj){
 	
 	
 	
-	let menuFile = "../json_data_files/" + requestObj.dataFile + "_menu.txt";
+	let menuFile = requestObj.dataFile + "_menu.txt";
 	let xmlhttp2 = new XMLHttpRequest();
 	xmlhttp2.open('GET', menuFile, true);
 	xmlhttp2.onreadystatechange = function(){
