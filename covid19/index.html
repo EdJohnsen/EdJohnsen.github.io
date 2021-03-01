@@ -7,7 +7,7 @@
 
 	<title>CoViD Data Done Right</title>
 
-	<link type="text/css" rel="stylesheet" href="css/box_reset_normalize_clearfix.css">
+	<link type="text/css" rel="stylesheet" href="box_reset_normalize_clearfix.css">
 	<style>
 		#site_nav{
 			float:left;
@@ -853,7 +853,7 @@ let edj_covid = (function(window, document){
 	// worker / in-line-script
 	if(window.Worker){
 		
-		data_worker = new Worker("js/edj_covid_data_worker.js");
+		data_worker = new Worker("edj_covid_data_worker.js");
 		
 		// add an event listener to the new worker
 		compat_AddListener(data_worker, 'message', 	workerMessage);
