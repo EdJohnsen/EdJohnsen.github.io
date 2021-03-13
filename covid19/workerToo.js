@@ -116,7 +116,7 @@ function fillLineArr(e){
 	lineDataArr 	= [];
 	pointGridArr 	= [];
 
-	let fileJSON = downloadedData['jhu_nations_wc'].raw;
+	let fileJSON = downloadedData['dhub_nations_wc'].raw;
 	
 	let ikey;
 	// find min and max values
@@ -284,7 +284,7 @@ let downloadedData 	= {};
 
 function getFile(e){
 	
-	let fileName = "jhu_nations_wc.txt";
+	let fileName = "dhub_nations_wc.txt";
 	
 	// let callback = requestObj.routeTo;
 	
@@ -297,7 +297,7 @@ function getFile(e){
 		if (xmlhttp.readyState == 4 && xmlhttp.status == 200){
 			
 			// Store a local copy of the json file response
-			downloadedData['jhu_nations_wc'] = {'raw':JSON.parse(xmlhttp.responseText),'meta':{}};
+			downloadedData['dhub_nations_wc'] = {'raw':JSON.parse(xmlhttp.responseText),'meta':{}};
 			// Update its meta values
 			
 			// Call the callback function on the stored json
